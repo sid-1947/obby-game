@@ -1,10 +1,9 @@
 import math
 import random
+import threading
 import time
 import tkinter as tk
 from tkinter import simpledialog
-
-import sys
 
 try:
     import winsound  # Windows
@@ -44,6 +43,14 @@ AVATAR_COLORS = {
     "Gold": "#f3c84b",
 }
 
+AVATAR_STYLES = {
+    "Blue": {"skin": "#f0c49b", "hair": "#4a3028", "accent": "#ffd166"},
+    "Red": {"skin": "#e7ae8e", "hair": "#34263c", "accent": "#ffe2c2"},
+    "Green": {"skin": "#c98f78", "hair": "#302b28", "accent": "#e8f5b8"},
+    "Purple": {"skin": "#f1c6a7", "hair": "#322744", "accent": "#f6dcff"},
+    "Gold": {"skin": "#e2aa82", "hair": "#65402a", "accent": "#fff1b0"},
+}
+
 SNIPER_COOLDOWN = 0.1
 BOSS_SPAWN_INTERVAL = 20.0
 BOSS_HEALTH = 5
@@ -53,7 +60,7 @@ FULLSCREEN = True
 
 
 def play_sound(root, sound="shot"):
-    """Play simple sound effects without requiring audio files."""
+    """Play a short sound without blocking the Tkinter event loop."""
     sounds = {
         "shot": (1000, 70),
         "boss_spawn": (180, 500),
@@ -62,20 +69,17 @@ def play_sound(root, sound="shot"):
         "damage": (120, 250),
         "explosion": (100, 300),
     }
+    frequency, duration = sounds[sound]
 
-    frequency, duration = sounds.get(sound, (500, 100))
+    if winsound is not None:
+        threading.Thread(
+            target=winsound.Beep,
+            args=(frequency, duration),
+            daemon=True,
+        ).start()
+        return
 
-    try:
-        if winsound is not None:
-            winsound.Beep(frequency, duration)
-        else:
-            # Tkinter bell is a fallback on non-Windows systems.
-            root.bell()
-    except Exception:
-        try:
-            root.bell()
-        except Exception:
-            pass
+    root.bell()
 
 
 def clamp(value, low, high):
@@ -101,7 +105,8 @@ class ObbyGame:
         self.first_person = False
 
         self.coins = 0
-        self.owned_colors = {"Blue"}
+        self.owned_avatars = {"Blue"}
+        self.avatar_name = "Blue"
         self.avatar_color = AVATAR_COLORS["Blue"]
 
         self.jetpack_owned = False
@@ -238,7 +243,7 @@ class ObbyGame:
         options = list(AVATAR_COLORS)
         choice = simpledialog.askstring(
             "Avatar shop",
-            "Colors cost 5 coins each.\nEnter: " + ", ".join(options),
+            "Outfits cost 5 coins each.\nEnter: " + ", ".join(options),
             parent=self.root,
         )
         if not choice:
@@ -252,13 +257,14 @@ class ObbyGame:
             self._notice("Unknown color")
             return
 
-        if color_name not in self.owned_colors:
+        if color_name not in self.owned_avatars:
             if self.coins < 5:
                 self._notice("Need 5 coins")
                 return
             self.coins -= 5
-            self.owned_colors.add(color_name)
+            self.owned_avatars.add(color_name)
 
+        self.avatar_name = color_name
         self.avatar_color = AVATAR_COLORS[color_name]
         self._notice(f"{color_name} equipped")
 
@@ -662,6 +668,7 @@ class ObbyGame:
     def _draw_2d_avatar(self):
         """Draw the third-person player as a screen-facing 2D character."""
         p = self.player
+        style = AVATAR_STYLES[self.avatar_name]
         point = self._project((p["x"], p["y"] + 1.1, p["z"]))
         feet = self._project((p["x"], p["y"], p["z"]))
         if point is None or feet is None:
@@ -696,6 +703,16 @@ class ObbyGame:
             sx + 13 * scale, feet_y,
             fill="#202530", width=max(2, int(7 * scale)),
         )
+        self.canvas.create_line(
+            sx - 10 * scale, feet_y - 2 * scale,
+            sx - 13 * scale, feet_y - 2 * scale,
+            fill="#f4f5ff", width=max(1, int(2 * scale)),
+        )
+        self.canvas.create_line(
+            sx + 10 * scale, feet_y - 2 * scale,
+            sx + 13 * scale, feet_y - 2 * scale,
+            fill="#f4f5ff", width=max(1, int(2 * scale)),
+        )
 
         # Torso, arms, and head.
         torso_top = feet_y - body_h
@@ -705,27 +722,57 @@ class ObbyGame:
             fill=self.avatar_color, outline="#202530",
             width=max(1, int(2 * scale)),
         )
+        self.canvas.create_rectangle(
+            sx - body_w / 2 + scale, torso_top + 20 * scale,
+            sx + body_w / 2 - scale, torso_top + 25 * scale,
+            fill=style["accent"], outline="",
+        )
+        self.canvas.create_line(
+            sx, torso_top + 27 * scale,
+            sx, feet_y - 28 * scale,
+            fill=style["accent"], width=max(1, int(3 * scale)),
+        )
+        self.canvas.create_oval(
+            sx - 2 * scale, torso_top + 30 * scale,
+            sx + 2 * scale, torso_top + 34 * scale,
+            fill="#fff4d4", outline="",
+        )
         self.canvas.create_line(
             sx - body_w / 2, torso_top + 23 * scale,
             sx - 21 * scale, feet_y - 35 * scale,
-            fill="#f0c49b", width=max(3, int(7 * scale)),
+            fill=style["skin"], width=max(3, int(7 * scale)),
         )
         self.canvas.create_line(
             sx + body_w / 2, torso_top + 23 * scale,
             sx + 21 * scale, feet_y - 35 * scale,
-            fill="#f0c49b", width=max(3, int(7 * scale)),
+            fill=style["skin"], width=max(3, int(7 * scale)),
         )
         head_y = torso_top + 6 * scale
         self.canvas.create_oval(
             sx - head_r, head_y - head_r,
             sx + head_r, head_y + head_r,
-            fill="#f0c49b", outline="#523c32",
+            fill=style["skin"], outline="#523c32",
             width=max(1, int(scale)),
         )
         self.canvas.create_arc(
             sx - head_r, head_y - head_r,
             sx + head_r, head_y + head_r,
-            start=0, extent=180, fill="#4a3028", outline="#4a3028",
+            start=0, extent=180, fill=style["hair"], outline=style["hair"],
+        )
+        eye_radius = max(1, scale * 1.2)
+        for offset in (-0.38, 0.38):
+            eye_x = sx + head_r * offset
+            eye_y = head_y + head_r * 0.08
+            self.canvas.create_oval(
+                eye_x - eye_radius, eye_y - eye_radius,
+                eye_x + eye_radius, eye_y + eye_radius,
+                fill="#28334a", outline="",
+            )
+        self.canvas.create_arc(
+            sx - head_r * 0.25, head_y + head_r * 0.22,
+            sx + head_r * 0.25, head_y + head_r * 0.58,
+            start=205, extent=130, style="arc",
+            outline="#9c5548", width=max(1, int(scale)),
         )
 
     def _draw_cuboid_hand(self, x, y, width, height, color, outline):

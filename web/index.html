@@ -1,0 +1,101 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#101b30">
+    <meta name="description" content="A colorful, free-to-play obstacle course game. No downloads or accounts needed.">
+    <title>Skybound Obby</title>
+    <link rel="stylesheet" href="./styles.css">
+    <script type="module" src="./js/main.js"></script>
+  </head>
+  <body>
+    <main class="app-shell">
+      <header class="topbar">
+        <a class="brand" href="./" aria-label="Skybound Obby home">
+          <span class="brand-mark" aria-hidden="true">S</span>
+          <span>SKYBOUND <strong>OBBY</strong></span>
+        </a>
+        <div class="top-actions">
+          <button class="icon-button" id="sound-toggle" type="button" aria-pressed="true" aria-label="Turn sound off">
+            <span aria-hidden="true" id="sound-icon">♫</span><span id="sound-label">Sound on</span>
+          </button>
+          <button class="icon-button" id="pause-button" type="button" aria-label="Pause game" disabled>
+            <span aria-hidden="true">Ⅱ</span><span>Pause</span>
+          </button>
+        </div>
+      </header>
+
+      <section class="game-frame" aria-label="Skybound Obby game">
+        <canvas id="game-canvas" tabindex="0" aria-label="Game world. Use W A S D or arrow keys to move and Space to jump."></canvas>
+
+        <div class="hud" aria-live="polite">
+          <div class="hud-card progress-card">
+            <span class="hud-label">COURSE</span>
+            <strong id="progress-value">1 <span>/ 36</span></strong>
+            <div class="progress-track" aria-hidden="true"><span id="progress-bar"></span></div>
+          </div>
+          <div class="hud-card run-card">
+            <span class="hud-label">RUN</span>
+            <div class="run-stats">
+              <strong class="coin-count"><span aria-hidden="true">◆</span> <span id="coin-value">0</span></strong>
+              <strong class="heart-count" id="health-value" aria-label="3 hearts">♥ ♥ ♥</strong>
+            </div>
+          </div>
+          <button class="avatar-button" id="avatar-button" type="button" aria-label="Choose avatar">
+            <span class="avatar-chip" id="avatar-chip">✦</span><span>Avatar</span>
+          </button>
+        </div>
+
+        <div class="toast" id="toast" role="status" aria-live="polite"></div>
+        <div class="touch-controls" id="touch-controls" role="group" aria-label="Touch movement controls">
+          <div class="touch-pad">
+            <button class="touch-button touch-up" type="button" data-touch-key="arrowup" aria-label="Move forward">↑</button>
+            <button class="touch-button touch-left" type="button" data-touch-key="arrowleft" aria-label="Move left">←</button>
+            <button class="touch-button touch-down" type="button" data-touch-key="arrowdown" aria-label="Move backward">↓</button>
+            <button class="touch-button touch-right" type="button" data-touch-key="arrowright" aria-label="Move right">→</button>
+          </div>
+          <button class="touch-button jump-button" id="touch-jump" type="button" aria-label="Jump">JUMP</button>
+        </div>
+
+        <section class="overlay" id="start-overlay" aria-labelledby="start-title">
+          <div class="dialog intro-dialog">
+            <span class="eyebrow">YOUR NEXT LITTLE ADVENTURE</span>
+            <h1 id="start-title">Make it to the <span>skyline.</span></h1>
+            <p class="intro-copy">Jump the gaps, dodge the hot spots, and collect stars on your way up.</p>
+            <div class="avatar-picker">
+              <div class="picker-heading"><span>Pick your explorer</span><span class="picker-hint">Change any time</span></div>
+              <div class="skin-options" id="skin-options" role="group" aria-label="Choose an avatar"></div>
+            </div>
+            <button class="primary-button" id="start-button" type="button">Start your run <span aria-hidden="true">→</span></button>
+            <p class="control-note"><kbd>W A S D</kbd> move <span>·</span> <kbd>SPACE</kbd> jump <span>·</span> <kbd>ESC</kbd> pause</p>
+          </div>
+        </section>
+
+        <section class="overlay hidden" id="pause-overlay" aria-labelledby="pause-title">
+          <div class="dialog compact-dialog">
+            <span class="eyebrow">TAKE A BREATHER</span>
+            <h2 id="pause-title">Run paused</h2>
+            <p>Your course is right where you left it.</p>
+            <button class="primary-button" id="resume-button" type="button">Keep going <span aria-hidden="true">→</span></button>
+            <button class="text-button" id="restart-button" type="button">Start over</button>
+          </div>
+        </section>
+
+        <section class="overlay hidden" id="result-overlay" aria-labelledby="result-title">
+          <div class="dialog compact-dialog">
+            <span class="eyebrow" id="result-eyebrow">NICE WORK</span>
+            <h2 id="result-title">The sky is yours.</h2>
+            <p id="result-copy">You made it all the way to the top.</p>
+            <button class="primary-button" id="play-again-button" type="button">Play again <span aria-hidden="true">↻</span></button>
+          </div>
+        </section>
+      </section>
+
+      <footer class="page-footer">
+        <span>One more jump. One more star.</span>
+        <span>Made for the browser · No downloads · No accounts</span>
+      </footer>
+    </main>
+  </body>
+</html>
